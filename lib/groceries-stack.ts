@@ -1,15 +1,35 @@
 import * as cdk from 'aws-cdk-lib';
 import {aws_s3 as s3, Duration} from 'aws-cdk-lib';
+import { S3DeployAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Construct } from 'constructs';
 
 export class GroceriesStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    new s3.Bucket(this, 'CDKBucket', {
+    const groceriesBucket = new s3.Bucket(this, 'CDKBucket', {
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true
+      publicReadAccess: true,
+      websiteIndexDocument: "index.html"
+
+    });
+
+    const src = new cdk.aws_s3_deployment.BucketDeployment(this, "DeployGroceries", {
+      destinationBucket: groceriesBucket,
+      sources: [cdk.aws_s3_deployment.Source.asset("../ynagl/build")],
+
+    });
+
+    const cloudfront = new cdk.aws_cloudfront.CloudFrontWebDistribution(this, "CDKGroceriesStaticDist", {
+      originConfigs: [
+        {
+          s3OriginSource: {
+            s3BucketSource: groceriesBucket
+          },
+          behaviors: [{isDefaultBehavior: true}]
+        }
+      ]
     });
 
     const groceriesTable = new cdk.aws_dynamodb.Table(this, 'Groceries', {
