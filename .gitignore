@@ -1,7 +1,11 @@
-*.js
+*stack.js
+*test.js
 !jest.config.js
 *.d.ts
 node_modules
+*.tfstate*
+.terraform*
+*payload.zip
 
 # CDK asset staging directory
 .cdk.staging

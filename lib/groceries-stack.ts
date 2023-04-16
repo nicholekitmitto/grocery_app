@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import {aws_s3 as s3, Duration} from 'aws-cdk-lib';
 import { S3DeployAction } from 'aws-cdk-lib/aws-codepipeline-actions';
+import { BucketAccessControl } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
 export class GroceriesStack extends cdk.Stack {
@@ -10,6 +11,7 @@ export class GroceriesStack extends cdk.Stack {
     const groceriesBucket = new s3.Bucket(this, 'CDKBucket', {
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      accessControl: BucketAccessControl.PUBLIC_READ,
       publicReadAccess: true,
       websiteIndexDocument: "index.html"
 
@@ -17,8 +19,11 @@ export class GroceriesStack extends cdk.Stack {
 
     const src = new cdk.aws_s3_deployment.BucketDeployment(this, "DeployGroceries", {
       destinationBucket: groceriesBucket,
-      sources: [cdk.aws_s3_deployment.Source.asset("../ynagl/build")],
-
+      sources: [cdk.aws_s3_deployment.Source.asset("./ynagl/build")],
+      cacheControl: [
+       cdk.aws_s3_deployment.CacheControl.setPublic(),
+       cdk.aws_s3_deployment.CacheControl.maxAge(cdk.Duration.days(30))
+      ]
     });
 
     const cloudfront = new cdk.aws_cloudfront.CloudFrontWebDistribution(this, "CDKGroceriesStaticDist", {
